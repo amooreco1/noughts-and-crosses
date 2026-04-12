@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noughts & Crosses</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f4f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .game-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem; }
+    .title { font-size: 22px; font-weight: 500; color: #1a1a1a; }
+    .scores { display: flex; gap: 16px; }
+    .score-card { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff; border-radius: 10px; padding: 10px 20px; border: 0.5px solid #e0dfd8; }
+    .score-label { font-size: 12px; color: #888; }
+    .score-val { font-size: 22px; font-weight: 500; }
+    .score-val.x-color { color: #185FA5; }
+    .score-val.o-color { color: #993C1D; }
+    .score-val.draw-color { color: #888; }
+    .turn-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #888; }
+    .turn-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .turn-dot.x { background: #185FA5; }
+    .turn-dot.o { background: #993C1D; }
+    .board { display: grid; grid-template-columns: repeat(3, 96px); grid-template-rows: repeat(3, 96px); gap: 6px; }
+    .cell { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 36px; font-weight: 500; transition: background 0.12s; user-select: none; }
+    .cell:hover:not(.taken) { background: #fafaf8; border-color: #c0bfb8; }
+    .cell.x { color: #185FA5; }
+    .cell.o { color: #993C1D; }
+    .cell.win { background: #fafaf8; border-color: #c0bfb8; }
+    .cell.taken { cursor: default; }
+    .status { font-size: 15px; color: #888; min-height: 24px; text-align: center; }
+    .status.winner { color: #1a1a1a; font-weight: 500; }
+    .reset-btn { font-size: 13px; padding: 6px 18px; border-radius: 8px; border: 0.5px solid #c0bfb8; background: transparent; color: #888; cursor: pointer; }
+    .reset-btn:hover { background: #f0efe8; }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="title">Noughts & Crosses</div>
+    <div class="scores">
+      <div class="score-card"><span class="score-label">X wins</span><span class="score-val x-color" id="xscore">0</span></div>
+      <div class="score-card"><span class="score-label">draws</span><span class="score-val draw-color" id="dscore">0</span></div>
+      <div class="score-card"><span class="score-label">O wins</span><span class="score-val o-color" id="oscore">0</span></div>
+    </div>
+    <div class="turn-indicator" id="turnind"><div class="turn-dot x"></div><span>X to play</span></div>
+    <div class="board" id="board">
+      <div class="cell" data-i="0"></div><div class="cell" data-i="1"></div><div class="cell" data-i="2"></div>
+      <div class="cell" data-i="3"></div><div class="cell" data-i="4"></div><div class="cell" data-i="5"></div>
+      <div class="cell" data-i="6"></div><div class="cell" data-i="7"></div><div class="cell" data-i="8"></div>
+    </div>
+    <div class="status" id="status"></div>
+    <button class="reset-btn" id="resetBtn">new game</button>
+  </div>
+  <script>
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let board, current, over, scores = { X: 0, O: 0, D: 0 };
+    function init() {
+      board = Array(9).fill(null); current = 'X'; over = false; render();
+    }
+    function checkWinner() {
+      for (const [a,b,c] of WINS) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) return { winner: board[a], line: [a,b,c] };
+      }
+      if (board.every(Boolean)) return { winner: null, line: [] };
+      return null;
+    }
+    function render() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach((cell, i) => {
+        cell.textContent = board[i] || '';
+        cell.className = 'cell' + (board[i] ? ' ' + board[i].toLowerCase() + ' taken' : '');
+      });
+      const result = checkWinner();
+      const status = document.getElementById('status');
+      const turnind = document.getElementById('turnind');
+      if (result) {
+        if (result.winner) {
+          result.line.forEach(i => cells[i].classList.add('win'));
+          status.textContent = result.winner + ' wins!';
+          status.className = 'status winner';
+          scores[result.winner]++;
+        } else {
+          status.textContent = "it's a draw";
+          status.className = 'status winner';
+          scores.D++;
+        }
+        turnind.style.opacity = '0.3';
+        document.getElementById('xscore').textContent = scores.X;
+        document.getElementById('oscore').textContent = scores.O;
+        document.getElementById('dscore').textContent = scores.D;
+        over = true;
+      } else {
+        status.textContent = ''; status.className = 'status';
+        turnind.style.opacity = '1';
+        turnind.innerHTML = `<div class="turn-dot ${current.toLowerCase()}"></div><span>${current} to play</span>`;
+      }
+    }
+    document.getElementById('board').addEventListener('click', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell || over || board[cell.dataset.i]) return;
+      board[cell.dataset.i] = current;
+      const result = checkWinner();
+      render();
+      if (!result) { current = current === 'X' ? 'O' : 'X'; render(); }
+    });
+    document.getElementById('resetBtn').addEventListener('click', init);
+    init();
+  </script>
+</body>
+</html>
