@@ -31,8 +31,6 @@
     .status.winner { color: #1a1a1a; font-weight: 500; }
     .reset-btn { font-size: 13px; padding: 6px 18px; border-radius: 8px; border: 0.5px solid #c0bfb8; background: transparent; color: #888; cursor: pointer; }
     .reset-btn:hover { background: #f0efe8; }
-
-    /* Timer */
     .timer-wrap { display: flex; align-items: center; justify-content: center; }
     .timer-ring { transform: rotate(-90deg); }
     .timer-ring-bg { fill: none; stroke: #e0dfd8; stroke-width: 3; }
@@ -52,17 +50,13 @@
       <div class="score-card"><span class="score-label">O wins</span><span class="score-val o-color" id="oscore">0</span></div>
     </div>
     <div class="turn-indicator" id="turnind"><div class="turn-dot x"></div><span>X to play</span></div>
-
-    <!-- Circular timer -->
     <div class="timer-wrap">
-      <svg width="52" height="52" class="timer-ring" id="timerSvg">
+      <svg width="52" height="52" class="timer-ring">
         <circle class="timer-ring-bg" cx="26" cy="26" r="22"/>
-        <circle class="timer-ring-fill x" cx="26" cy="26" r="22" id="timerArc"
-          stroke-dasharray="138.2" stroke-dashoffset="0"/>
+        <circle class="timer-ring-fill x" cx="26" cy="26" r="22" id="timerArc" stroke-dasharray="138.2" stroke-dashoffset="0"/>
         <text class="timer-text" x="26" y="26" id="timerText" transform="rotate(90,26,26)">15</text>
       </svg>
     </div>
-
     <div class="board" id="board">
       <div class="cell" data-i="0"></div><div class="cell" data-i="1"></div><div class="cell" data-i="2"></div>
       <div class="cell" data-i="3"></div><div class="cell" data-i="4"></div><div class="cell" data-i="5"></div>
@@ -74,14 +68,11 @@
   <script>
     const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     const TOTAL = 15;
-    const CIRCUMFERENCE = 2 * Math.PI * 22; // ~138.23
-
+    const CIRCUMFERENCE = 2 * Math.PI * 22;
     let board, current, over, scores = { X: 0, O: 0, D: 0 };
     let timeLeft, timerInterval;
-
     const timerArc = document.getElementById('timerArc');
     const timerText = document.getElementById('timerText');
-
     function startTimer() {
       clearInterval(timerInterval);
       timeLeft = TOTAL;
@@ -92,32 +83,17 @@
         if (timeLeft <= 0) clearInterval(timerInterval);
       }, 1000);
     }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-    }
-
+    function stopTimer() { clearInterval(timerInterval); }
     function updateTimerDisplay() {
-      const fraction = timeLeft / TOTAL;
-      const offset = CIRCUMFERENCE * (1 - fraction);
-      timerArc.style.strokeDashoffset = offset;
+      timerArc.style.strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / TOTAL);
       timerText.textContent = timeLeft;
-
-      // Update colour class
       timerArc.classList.remove('x', 'o', 'urgent');
-      if (timeLeft <= 5) {
-        timerArc.classList.add('urgent');
-      } else {
-        timerArc.classList.add(current.toLowerCase());
-      }
+      timerArc.classList.add(timeLeft <= 5 ? 'urgent' : current.toLowerCase());
     }
-
     function init() {
       board = Array(9).fill(null); current = 'X'; over = false;
-      render();
-      startTimer();
+      render(); startTimer();
     }
-
     function checkWinner() {
       for (const [a,b,c] of WINS) {
         if (board[a] && board[a] === board[b] && board[a] === board[c]) return { winner: board[a], line: [a,b,c] };
@@ -125,7 +101,6 @@
       if (board.every(Boolean)) return { winner: null, line: [] };
       return null;
     }
-
     function render() {
       const cells = document.querySelectorAll('.cell');
       cells.forEach((cell, i) => {
@@ -152,7 +127,6 @@
         document.getElementById('dscore').textContent = scores.D;
         over = true;
         stopTimer();
-        // Show empty ring when game over
         timerArc.style.strokeDashoffset = CIRCUMFERENCE;
         timerText.textContent = '';
       } else {
@@ -161,20 +135,14 @@
         turnind.innerHTML = `<div class="turn-dot ${current.toLowerCase()}"></div><span>${current} to play</span>`;
       }
     }
-
     document.getElementById('board').addEventListener('click', e => {
       const cell = e.target.closest('.cell');
       if (!cell || over || board[cell.dataset.i]) return;
       board[cell.dataset.i] = current;
       const result = checkWinner();
       render();
-      if (!result) {
-        current = current === 'X' ? 'O' : 'X';
-        render();
-        startTimer();
-      }
+      if (!result) { current = current === 'X' ? 'O' : 'X'; render(); startTimer(); }
     });
-
     document.getElementById('resetBtn').addEventListener('click', init);
     init();
   </script>
