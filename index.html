@@ -9,9 +9,17 @@
     body { font-family: system-ui, sans-serif; background: #f5f4f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
     .game-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem; }
     .title { font-size: 22px; font-weight: 500; color: #1a1a1a; }
+    .players { display: flex; gap: 12px; align-items: center; }
+    .player-input-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .player-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em; }
+    .player-input { font-size: 14px; font-weight: 500; border: none; border-bottom: 1.5px solid #e0dfd8; background: transparent; text-align: center; width: 100px; padding: 2px 4px; outline: none; color: #1a1a1a; }
+    .player-input.x-input { color: #185FA5; border-bottom-color: #185FA5; }
+    .player-input.o-input { color: #993C1D; border-bottom-color: #993C1D; }
+    .player-input:focus { border-bottom-width: 2px; }
+    .vs { font-size: 12px; color: #ccc; font-weight: 500; }
     .scores { display: flex; gap: 16px; }
-    .score-card { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff; border-radius: 10px; padding: 10px 20px; border: 0.5px solid #e0dfd8; }
-    .score-label { font-size: 12px; color: #888; }
+    .score-card { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff; border-radius: 10px; padding: 10px 20px; border: 0.5px solid #e0dfd8; min-width: 80px; }
+    .score-label { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-align: center; }
     .score-val { font-size: 22px; font-weight: 500; }
     .score-val.x-color { color: #185FA5; }
     .score-val.o-color { color: #993C1D; }
@@ -20,6 +28,14 @@
     .turn-dot { width: 10px; height: 10px; border-radius: 50%; }
     .turn-dot.x { background: #185FA5; }
     .turn-dot.o { background: #993C1D; }
+    .timer-wrap { display: flex; align-items: center; justify-content: center; }
+    .timer-ring { transform: rotate(-90deg); }
+    .timer-ring-bg { fill: none; stroke: #e0dfd8; stroke-width: 3; }
+    .timer-ring-fill { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+    .timer-ring-fill.x { stroke: #185FA5; }
+    .timer-ring-fill.o { stroke: #993C1D; }
+    .timer-ring-fill.urgent { stroke: #c0392b; }
+    .timer-text { font-size: 13px; font-weight: 500; fill: #888; dominant-baseline: middle; text-anchor: middle; }
     .board { display: grid; grid-template-columns: repeat(3, 96px); grid-template-rows: repeat(3, 96px); gap: 6px; }
     .cell { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 36px; font-weight: 500; transition: background 0.12s; user-select: none; }
     .cell:hover:not(.taken) { background: #fafaf8; border-color: #c0bfb8; }
@@ -31,25 +47,37 @@
     .status.winner { color: #1a1a1a; font-weight: 500; }
     .reset-btn { font-size: 13px; padding: 6px 18px; border-radius: 8px; border: 0.5px solid #c0bfb8; background: transparent; color: #888; cursor: pointer; }
     .reset-btn:hover { background: #f0efe8; }
-    .timer-wrap { display: flex; align-items: center; justify-content: center; }
-    .timer-ring { transform: rotate(-90deg); }
-    .timer-ring-bg { fill: none; stroke: #e0dfd8; stroke-width: 3; }
-    .timer-ring-fill { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
-    .timer-ring-fill.x { stroke: #185FA5; }
-    .timer-ring-fill.o { stroke: #993C1D; }
-    .timer-ring-fill.urgent { stroke: #c0392b; }
-    .timer-text { font-size: 13px; font-weight: 500; fill: #888; dominant-baseline: middle; text-anchor: middle; }
   </style>
 </head>
 <body>
   <div class="game-wrap">
     <div class="title">Noughts & Crosses</div>
-    <div class="scores">
-      <div class="score-card"><span class="score-label">X wins</span><span class="score-val x-color" id="xscore">0</span></div>
-      <div class="score-card"><span class="score-label">draws</span><span class="score-val draw-color" id="dscore">0</span></div>
-      <div class="score-card"><span class="score-label">O wins</span><span class="score-val o-color" id="oscore">0</span></div>
+    <div class="players">
+      <div class="player-input-wrap">
+        <span class="player-label">Player X</span>
+        <input class="player-input x-input" id="nameX" type="text" maxlength="12" placeholder="Player X" value="Player X" />
+      </div>
+      <span class="vs">vs</span>
+      <div class="player-input-wrap">
+        <span class="player-label">Player O</span>
+        <input class="player-input o-input" id="nameO" type="text" maxlength="12" placeholder="Player O" value="Player O" />
+      </div>
     </div>
-    <div class="turn-indicator" id="turnind"><div class="turn-dot x"></div><span>X to play</span></div>
+    <div class="scores">
+      <div class="score-card">
+        <span class="score-label" id="labelX">Player X</span>
+        <span class="score-val x-color" id="xscore">0</span>
+      </div>
+      <div class="score-card">
+        <span class="score-label">Draws</span>
+        <span class="score-val draw-color" id="dscore">0</span>
+      </div>
+      <div class="score-card">
+        <span class="score-label" id="labelO">Player O</span>
+        <span class="score-val o-color" id="oscore">0</span>
+      </div>
+    </div>
+    <div class="turn-indicator" id="turnind"><div class="turn-dot x"></div><span id="turnText">Player X to play</span></div>
     <div class="timer-wrap">
       <svg width="52" height="52" class="timer-ring">
         <circle class="timer-ring-bg" cx="26" cy="26" r="22"/>
@@ -72,7 +100,26 @@
     let board, current, over, scores = { X: 0, O: 0, D: 0 };
     let timeLeft, timerInterval;
     const timerArc = document.getElementById('timerArc');
-    const timerText = document.getElementById('timerText');
+    const timerTextEl = document.getElementById('timerText');
+    const nameXInput = document.getElementById('nameX');
+    const nameOInput = document.getElementById('nameO');
+
+    function getName(player) {
+      return (player === 'X' ? nameXInput.value : nameOInput.value).trim() || (player === 'X' ? 'Player X' : 'Player O');
+    }
+    function updateLabels() {
+      document.getElementById('labelX').textContent = getName('X');
+      document.getElementById('labelO').textContent = getName('O');
+      if (!over) updateTurnIndicator();
+    }
+    function updateTurnIndicator() {
+      const turnind = document.getElementById('turnind');
+      turnind.style.opacity = '1';
+      turnind.innerHTML = `<div class="turn-dot ${current.toLowerCase()}"></div><span>${getName(current)} to play</span>`;
+    }
+    nameXInput.addEventListener('input', updateLabels);
+    nameOInput.addEventListener('input', updateLabels);
+
     function startTimer() {
       clearInterval(timerInterval);
       timeLeft = TOTAL;
@@ -86,7 +133,7 @@
     function stopTimer() { clearInterval(timerInterval); }
     function updateTimerDisplay() {
       timerArc.style.strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / TOTAL);
-      timerText.textContent = timeLeft;
+      timerTextEl.textContent = timeLeft;
       timerArc.classList.remove('x', 'o', 'urgent');
       timerArc.classList.add(timeLeft <= 5 ? 'urgent' : current.toLowerCase());
     }
@@ -113,7 +160,7 @@
       if (result) {
         if (result.winner) {
           result.line.forEach(i => cells[i].classList.add('win'));
-          status.textContent = result.winner + ' wins!';
+          status.textContent = getName(result.winner) + ' wins!';
           status.className = 'status winner';
           scores[result.winner]++;
         } else {
@@ -128,11 +175,10 @@
         over = true;
         stopTimer();
         timerArc.style.strokeDashoffset = CIRCUMFERENCE;
-        timerText.textContent = '';
+        timerTextEl.textContent = '';
       } else {
         status.textContent = ''; status.className = 'status';
-        turnind.style.opacity = '1';
-        turnind.innerHTML = `<div class="turn-dot ${current.toLowerCase()}"></div><span>${current} to play</span>`;
+        updateTurnIndicator();
       }
     }
     document.getElementById('board').addEventListener('click', e => {
@@ -144,6 +190,7 @@
       if (!result) { current = current === 'X' ? 'O' : 'X'; render(); startTimer(); }
     });
     document.getElementById('resetBtn').addEventListener('click', init);
+    updateLabels();
     init();
   </script>
 </body>
